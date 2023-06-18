@@ -8,13 +8,13 @@ import ImagePromise from 'Utils/ImagePromise'
 const App: FC = () => {
 	const [OriginalImage, SetOriginalImage] = useState<string>('')
 
-	const GrayCanvasRef = useRef<HTMLCanvasElement>(null)
+	const PreviewCanvasRef = useRef<HTMLCanvasElement>(null)
 
 	useEffect(() => {
 		if (!OriginalImage) return
 
 		const asyncWrapper = async () => {
-			if (!GrayCanvasRef.current) return
+			if (!PreviewCanvasRef.current) return
 
 			const image = await ImagePromise(OriginalImage)
 
@@ -26,15 +26,20 @@ const App: FC = () => {
 
 			const img = cv.imread(canvas)
 
-			console.log(img)
+			const imgPreview = new cv.Mat()
 
-			// to gray scale
-			const imgGray = new cv.Mat()
-			cv.cvtColor(img, imgGray, cv.COLOR_BGR2GRAY)
-			cv.imshow(GrayCanvasRef.current, imgGray)
+			// Process
+			cv.morphologyEx(
+				img,
+				imgPreview,
+				cv.MORPH_CLOSE,
+				cv.Mat.ones(15, 15, cv.CV_8U)
+			)
+
+			cv.imshow(PreviewCanvasRef.current, imgPreview)
 
 			img.delete()
-			imgGray.delete()
+			imgPreview.delete()
 		}
 
 		asyncWrapper()
@@ -58,7 +63,7 @@ const App: FC = () => {
 			/>
 			<img alt='Original input' src={OriginalImage} />
 
-			<canvas ref={GrayCanvasRef} />
+			<canvas ref={PreviewCanvasRef} />
 		</div>
 	)
 }
